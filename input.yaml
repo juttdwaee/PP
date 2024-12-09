@@ -1,0 +1,7 @@
+equations:
+  - id: 1
+    expression: "x^2 + y / 3 - a"
+  - id: 2
+    expression: "(m + n) * (p - q)"
+  - id: 3
+    expression: "z^3 / (x + y) - b"

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<equations>
+    <equation id="1">
+        <expression>x * y + a / 4</expression>
+    </equation>
+    <equation id="2">
+        <expression>(x + y) / z - b</expression>
+    </equation>
+    <equation id="3">
+        <expression>a^2 + b * c - d / 2</expression>
+    </equation>
+    <equation id="5">
+        <expression>(x + y) * (a - b) / c</expression>
+    </equation>
+</equations>

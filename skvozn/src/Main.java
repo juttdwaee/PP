@@ -1,100 +1,298 @@
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
+import java.util.zip.*;
 
 public class Main {
+
     public static void main(String[] args) {
-        // Укажи путь к входному и выходному файлу
-        String inputFilePath = "input.html";
-        String outputFilePath = "output.html";
+        // Спрашиваем пользователя, какой интерфейс использовать: CLI или GUI
+        String[] options = {"CLI", "GUI"};
+        int choice = JOptionPane.showOptionDialog(null, "Choose the interface", "Select Interface", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+        if (choice == 0) {
+            // Запуск CLI (консольного интерфейса)
+            runCLI();
+        } else {
+            // Запуск GUI (графического интерфейса)
+            runGUI();
+        }
+    }
+
+    public static void runCLI() {
+        Scanner scanner = new Scanner(System.in);
+
+        // Запрос данных у пользователя
+        System.out.println("Enter input file name:");
+        String inputFile = scanner.nextLine();
+        System.out.println("Enter output file name:");
+        String outputFile = scanner.nextLine();
+        System.out.println("Enter input file type (txt, json, xml, yaml, html):");
+        String inputFileType = scanner.nextLine();
+        System.out.println("Enter output file type (txt, json, xml, yaml, html):");
+        String outputFileType = scanner.nextLine();
+        System.out.println("Would you like to encrypt the file? (yes/no):");
+        String encrypt = scanner.nextLine();
+        System.out.println("Would you like to archive the file? (yes/no):");
+        String archive = scanner.nextLine();
 
         try {
-            // Чтение HTML файла
-            String content = new String(Files.readAllBytes(Paths.get(inputFilePath)));
+            // Чтение входного файла
+            String content = readFile(inputFile, inputFileType);
+            System.out.println("Read content: " + content);
 
-            // Обработка содержимого файла: замена выражений результатами
-            String processedContent = processContent(content);
+            // Запрос значений переменных у пользователя
+            Map<String, Double> variables = getVariables(content, scanner);
+
+            // Обработка арифметических выражений
+            String processedContent = processArithmeticExpressions(content, variables);
+
+            // Если нужно зашифровать файл
+            if (encrypt.equalsIgnoreCase("yes")) {
+                processedContent = encrypt(processedContent);
+                System.out.println("File encrypted.");
+            }
 
             // Запись результата в выходной файл
-            writeToFile(outputFilePath, processedContent);
+            writeFile(outputFile, outputFileType, processedContent);
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            // Если нужно заархивировать файл
+            if (archive.equalsIgnoreCase("yes")) {
+                archiveFile(outputFile);
+                System.out.println("File archived.");
+            }
+
+            System.out.println("File processed and saved as: " + outputFile);
+        } catch (Exception ex) {
+            System.out.println("Error: " + ex.getMessage());
+        }
+
+        scanner.close();
+    }
+
+    public static String readFile(String filename, String fileType) throws Exception {
+        System.out.println("Reading file: " + filename);
+        switch (fileType.toLowerCase()) {
+            case "txt": return readTextFile(filename);
+            case "json": return readJsonFile(filename);
+            case "xml": return readXmlFile(filename);
+            case "yaml": return readYamlFile(filename);
+            case "html": return readHtmlFile(filename);
+            default: throw new IllegalArgumentException("Unsupported file type: " + fileType);
         }
     }
 
-    // Метод для обработки содержимого файла
-    public static String processContent(String content) {
-        Scanner scanner = new Scanner(System.in);
-        StringBuilder processedContent = new StringBuilder();
+    public static void writeFile(String filename, String fileType, String content) throws Exception {
+        System.out.println("Writing to file: " + filename);
+        switch (fileType.toLowerCase()) {
+            case "txt": writeTextFile(filename, content); break;
+            case "json": writeJsonFile(filename, content); break;
+            case "xml": writeXmlFile(filename, content); break;
+            case "yaml": writeYamlFile(filename, content); break;
+            case "html": writeHtmlFile(filename, content); break;
+            default: throw new IllegalArgumentException("Unsupported file type: " + fileType);
+        }
+    }
 
-        // Регулярное выражение для поиска арифметических выражений с неизвестными
-        Pattern pattern = Pattern.compile("([a-zA-Z]+)\\s*([+\\-*/])\\s*([a-zA-Z]+)");
+    public static String readTextFile(String filename) throws IOException {
+        return new String(Files.readAllBytes(Paths.get(filename)));
+    }
+
+    public static void writeTextFile(String filename, String content) throws IOException {
+        Files.write(Paths.get(filename), content.getBytes());
+    }
+
+    public static String readJsonFile(String filename) throws IOException {
+        // Реализуйте чтение JSON файла
+        // (это пример, вам нужно использовать библиотеку для работы с JSON, например, Jackson или Gson)
+        return new String(Files.readAllBytes(Paths.get(filename)));
+    }
+
+    public static void writeJsonFile(String filename, String content) throws IOException {
+        // Реализуйте запись в JSON файл
+        Files.write(Paths.get(filename), content.getBytes());
+    }
+
+    public static String readXmlFile(String filename) throws Exception {
+        // Пример для XML. Вам нужно использовать библиотеку для парсинга XML, например, JAXP или JAXB
+        return new String(Files.readAllBytes(Paths.get(filename)));
+    }
+
+    public static void writeXmlFile(String filename, String content) throws IOException {
+        Files.write(Paths.get(filename), content.getBytes());
+    }
+
+    public static String readYamlFile(String filename) throws IOException {
+        // Пример для YAML. Для парсинга YAML используйте библиотеку, например SnakeYAML
+        return new String(Files.readAllBytes(Paths.get(filename)));
+    }
+
+    public static void writeYamlFile(String filename, String content) throws IOException {
+        Files.write(Paths.get(filename), content.getBytes());
+    }
+
+    public static String readHtmlFile(String filename) throws IOException {
+        return new String(Files.readAllBytes(Paths.get(filename)));
+    }
+
+    public static void writeHtmlFile(String filename, String content) throws IOException {
+        Files.write(Paths.get(filename), content.getBytes());
+    }
+
+    public static Map<String, Double> getVariables(String content, Scanner scanner) {
+        Map<String, Double> variables = new HashMap<>();
+        Pattern pattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*"); // Регулярное выражение для переменных
         Matcher matcher = pattern.matcher(content);
-
-        Map<String, Double> variables = new HashMap<>(); // Для хранения значений неизвестных
-        int lastPos = 0;
-
-        // Поиск всех арифметических выражений в тексте
         while (matcher.find()) {
-            String var1 = matcher.group(1); // Первая переменная
-            String operator = matcher.group(2); // Оператор (+, -, *, /)
-            String var2 = matcher.group(3); // Вторая переменная
-
-            // Получение значения для первой переменной, если она ещё не введена
-            double value1 = variables.containsKey(var1) ? variables.get(var1) : getVariableValue(scanner, var1);
-            variables.put(var1, value1); // Сохраняем переменную в Map
-
-            // Получение значения для второй переменной, если она ещё не введена
-            double value2 = variables.containsKey(var2) ? variables.get(var2) : getVariableValue(scanner, var2);
-            variables.put(var2, value2); // Сохраняем переменную в Map
-
-            double result = calculate(value1, operator, value2);
-
-            // Добавляем к обработанному контенту результат вычисления
-            processedContent.append(content, lastPos, matcher.start());
-            processedContent.append(result); // Заменяем выражение результатом
-            lastPos = matcher.end();
+            String variable = matcher.group();
+            if (!variables.containsKey(variable)) {
+                System.out.print("Enter value for variable '" + variable + "': ");
+                double value = scanner.nextDouble();
+                variables.put(variable, value);
+            }
         }
-
-        // Добавляем оставшуюся часть контента после последнего совпадения
-        processedContent.append(content.substring(lastPos));
-
-        return processedContent.toString();
+        return variables;
     }
 
-    public static double getVariableValue(Scanner scanner, String variable) {
-        System.out.print("Введите значение для переменной " + variable + ": ");
-        return scanner.nextDouble();
+    public static String processArithmeticExpressions(String content, Map<String, Double> variables) {
+        System.out.println("Processing arithmetic expressions...");
+        String[] lines = content.split("\n");
+        StringBuilder result = new StringBuilder();
+        for (String line : lines) {
+            if (line.trim().isEmpty()) continue;
+            String processedLine = processLine(line, variables);
+            result.append(processedLine).append("\n");
+        }
+        return result.toString();
     }
-    public static double calculate(double left, String operator, double right) {
-        switch (operator) {
-            case "+":
-                return left + right;
-            case "-":
-                return left - right;
-            case "*":
-                return left * right;
-            case "/":
-                if (right == 0) {
-                    System.out.println("Ошибка: деление на ноль!");
-                    return 0;
+
+    public static String processLine(String line, Map<String, Double> variables) {
+        // Заменяем переменные на их значения
+        Pattern pattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*"); // Поиск переменных
+        Matcher matcher = pattern.matcher(line);
+        StringBuffer processedLine = new StringBuffer();
+        while (matcher.find()) {
+            String variable = matcher.group();
+            if (variables.containsKey(variable)) {
+                matcher.appendReplacement(processedLine, String.valueOf(variables.get(variable)));
+            } else {
+                matcher.appendReplacement(processedLine, variable); // Если переменной нет в списке, оставляем как есть
+            }
+        }
+        matcher.appendTail(processedLine);
+
+        String finalExpression = processedLine.toString();
+        System.out.println("Final expression: " + finalExpression);
+
+        try {
+            double result = evaluateArithmeticExpression(finalExpression);
+            return String.valueOf(result);
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    public static double evaluateArithmeticExpression(String expression) {
+        try {
+            Expression exp = new ExpressionBuilder(expression).build();
+            return exp.evaluate();
+        } catch (Exception e) {
+            System.out.println("Error evaluating expression: " + expression);
+            return 0;
+        }
+    }
+
+    public static String encrypt(String content) throws Exception {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(128); // Используем 128-битное шифрование
+        SecretKey secretKey = keyGenerator.generateKey();
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encryptedBytes = cipher.doFinal(content.getBytes());
+        return Base64.getEncoder().encodeToString(encryptedBytes);
+    }
+
+    public static void archiveFile(String fileName) throws IOException {
+        String zipFileName = fileName + ".zip";
+        try (FileOutputStream fos = new FileOutputStream(zipFileName);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+            File fileToZip = new File(fileName);
+            try (FileInputStream fis = new FileInputStream(fileToZip)) {
+                ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+                zos.putNextEntry(zipEntry);
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = fis.read(buffer)) >= 0) {
+                    zos.write(buffer, 0, length);
                 }
-                return left / right;
-            default:
-                throw new IllegalArgumentException("Неподдерживаемая операция: " + operator);
+            }
         }
     }
 
-    // Метод для записи данных в файл
-    public static void writeToFile(String filePath, String content) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            writer.write(content); // Запись обработанного содержимого в файл
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void runGUI() {
+        JFrame frame = new JFrame("File Processor");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 300);
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(7, 2));
+        JTextField inputFileField = new JTextField();
+        JTextField outputFileField = new JTextField();
+        JTextField inputFileTypeField = new JTextField();
+        JTextField outputFileTypeField = new JTextField();
+        JCheckBox encryptCheckBox = new JCheckBox("Encrypt file");
+        JCheckBox archiveCheckBox = new JCheckBox("Archive file");
+        JButton processButton = new JButton("Process");
+        panel.add(new JLabel("Input File:"));
+        panel.add(inputFileField);
+        panel.add(new JLabel("Output File:"));
+        panel.add(outputFileField);
+        panel.add(new JLabel("Input File Type:"));
+        panel.add(inputFileTypeField);
+        panel.add(new JLabel("Output File Type:"));
+        panel.add(outputFileTypeField);
+        panel.add(encryptCheckBox);
+        panel.add(archiveCheckBox);
+        panel.add(processButton);
+        frame.add(panel);
+        frame.setVisible(true);
+
+        processButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Обработчик клика по кнопке Process
+                String inputFile = inputFileField.getText();
+                String outputFile = outputFileField.getText();
+                String inputFileType = inputFileTypeField.getText();
+                String outputFileType = outputFileTypeField.getText();
+                String encrypt = encryptCheckBox.isSelected() ? "yes" : "no";
+                String archive = archiveCheckBox.isSelected() ? "yes" : "no";
+
+                // Вызываем основную логику обработки
+                try {
+                    // Чтение и обработка файла с GUI
+                    String content = readFile(inputFile, inputFileType);
+                    Map<String, Double> variables = getVariables(content, new Scanner(System.in));
+                    String processedContent = processArithmeticExpressions(content, variables);
+                    if (encrypt.equals("yes")) {
+                        processedContent = encrypt(processedContent);
+                    }
+                    writeFile(outputFile, outputFileType, processedContent);
+                    if (archive.equals("yes")) {
+                        archiveFile(outputFile);
+                    }
+                    JOptionPane.showMessageDialog(frame, "File processed successfully!");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(frame, "Error: " + ex.getMessage());
+                }
+            }
+        });
     }
 }
