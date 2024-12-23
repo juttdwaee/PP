@@ -8,7 +8,6 @@ import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MainTests {
-
     private static final String TEST_JSON_FILE = "test.json";
     private static final String TEST_OUTPUT_JSON_FILE = "output.json";
     private static final String TEST_TEXT_FILE = "test.txt";
