@@ -17,8 +17,6 @@ import com.github.junrar.Archive;
 import com.github.junrar.rarfile.FileHeader;
 import com.github.junrar.exception.RarException;
 
-
-
 public class Main {
 
     public static void main(String[] args) {
